@@ -6,6 +6,8 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── EXISTING TABLES (extended) ──────────────────────────────────────────────
+
 model addresses {
   id                                Int                                 @id @default(autoincrement())
   city                              String?                             @db.VarChar(50)
@@ -14,8 +16,22 @@ model addresses {
   apartmentnumber                   String?                             @db.VarChar(20)
   zipcode                           String?                             @db.VarChar(20)
   personid                          Int?
+  // New columns
+  name                              String?                             @db.VarChar(100)
+  email                             String?                             @db.VarChar(100)
+  phone                             String?                             @db.VarChar(20)
+  zone                              String?                             @db.VarChar(100)
+  district                          String?                             @db.VarChar(100)
+  floor                             String?                             @db.VarChar(20)
+  postalcode                        String?                             @db.VarChar(20)
+  bosta_city_id                     String?                             @db.VarChar(50)
+  bosta_zone_id                     String?                             @db.VarChar(50)
+  bosta_district_id                 String?                             @db.VarChar(50)
+  // Relations
   person                            person?                             @relation(fields: [personid], references: [personid], onUpdate: NoAction)
   addresses_and_contact_phonenumber addresses_and_contact_phonenumber[]
+  orders                            orders[]                            @relation("order_address")
+  offer_payments                    offer_payments[]
 }
 
 model addresses_and_contact_phonenumber {
@@ -93,18 +109,24 @@ model coupon_product {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model coupons {
-  couponid       Int              @id @default(autoincrement())
-  description    String           @db.VarChar(500)
-  created_at     DateTime         @default(now()) @db.Timestamp(6)
-  status         Boolean?         @default(true)
-  expired_date   DateTime?        @db.Timestamp(6)
-  scope          Int              @db.SmallInt
-  creatorid      Int
-  storeid        Int?
-  coupon_product coupon_product[]
-  person         person           @relation(fields: [creatorid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
-  seller         seller?          @relation(fields: [storeid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
-  user_coupons   user_coupons[]
+  couponid            Int              @id @default(autoincrement())
+  description         String           @db.VarChar(500)
+  created_at          DateTime         @default(now()) @db.Timestamp(6)
+  status              Boolean?         @default(true)
+  expired_date        DateTime?        @db.Timestamp(6)
+  scope               Int              @db.SmallInt
+  creatorid           Int
+  storeid             Int?
+  // New columns
+  code                String?          @unique @db.VarChar(50)
+  discount_percentage Decimal?         @db.Decimal(5, 2)
+  max_users           Int?             @default(100)
+  used_count          Int?             @default(0)
+  // Relations
+  coupon_product      coupon_product[]
+  person              person           @relation(fields: [creatorid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  seller              seller?          @relation(fields: [storeid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+  user_coupons        user_coupons[]
 }
 
 model custom_request {
@@ -122,11 +144,19 @@ model custom_request {
   status                Int?                 @db.SmallInt
   enduserid             Int
   categoryid            Int
+  // New columns
+  sellerid              Int?
+  image_urls            String[]
+  voicememo_url         String?              @db.VarChar(500)
+  // Relations
   color_palette         color_palette[]
   category              category             @relation(fields: [categoryid], references: [categoryid], onDelete: NoAction, onUpdate: NoAction)
   enduser               enduser              @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
+  seller                seller?              @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
   visual_inspiration    visual_inspiration[]
   voicememo             voicememo[]
+  offers                offers[]
+  reports               reports[]            @relation("report_custom_request")
 }
 
 model customized_order {
@@ -175,31 +205,44 @@ model notification {
   created_at          DateTime @default(now()) @db.Timestamp(6)
   is_read             Boolean? @default(false)
   personid            Int
+  // New columns
+  type                String?  @db.VarChar(50)
+  href                String?  @db.VarChar(500)
+  // Relations
   person              person   @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model orders {
-  orderid          Int               @id @default(autoincrement())
-  status           Int?              @db.SmallInt
-  shippingcost     Decimal?          @db.Decimal(10, 2)
-  totalamount      Decimal?          @db.Decimal(12, 2)
-  paymentid        Int
-  paymentmethod    Int?              @db.SmallInt
-  psp              String?           @db.VarChar(50)
-  paymentstatus    Int?              @db.SmallInt
-  transaction_ref  String?           @db.VarChar(50)
-  paid_at          DateTime          @db.Timestamp(6)
-  shipmentid       Int?
-  sellerid         Int?
-  enduserid        Int?
-  consist_of       consist_of[]
-  customized_order customized_order?
-  enduser          enduser?          @relation(fields: [enduserid], references: [enduserid], onUpdate: NoAction)
-  seller           seller?           @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
-  shipment         shipment?         @relation(fields: [shipmentid], references: [shipmentid], onUpdate: NoAction)
-  returns          returns[]
-  standard_order   standard_order?
-  user_coupons     user_coupons[]
+  orderid                  Int               @id @default(autoincrement())
+  status                   Int?              @db.SmallInt
+  shippingcost             Decimal?          @db.Decimal(10, 2)
+  totalamount              Decimal?          @db.Decimal(12, 2)
+  paymentid                Int
+  paymentmethod            Int?              @db.SmallInt
+  psp                      String?           @db.VarChar(50)
+  paymentstatus            Int?              @db.SmallInt
+  transaction_ref          String?           @db.VarChar(50)
+  paid_at                  DateTime          @db.Timestamp(6)
+  shipmentid               Int?
+  sellerid                 Int?
+  enduserid                Int?
+  // New columns
+  stripe_payment_intent_id String?           @db.VarChar(200)
+  is_paid                  Boolean?          @default(false)
+  address_id               Int?
+  coupon_snapshot          Json?
+  created_at               DateTime?         @default(now()) @db.Timestamp(6)
+  // Relations
+  consist_of               consist_of[]
+  customized_order         customized_order?
+  enduser                  enduser?          @relation(fields: [enduserid], references: [enduserid], onUpdate: NoAction)
+  seller                   seller?           @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+  shipment                 shipment?         @relation(fields: [shipmentid], references: [shipmentid], onUpdate: NoAction)
+  address                  addresses?        @relation("order_address", fields: [address_id], references: [id], onUpdate: NoAction)
+  returns                  returns[]
+  standard_order           standard_order?
+  user_coupons             user_coupons[]
+  store_orders             store_orders[]
 }
 
 model payout {
@@ -215,10 +258,14 @@ model payout {
 model person {
   personid           Int                  @id @default(autoincrement())
   email              String               @unique @db.VarChar(100)
-  password           String               @db.VarChar(50)
+  password           String               @db.VarChar(100)
   created_at         DateTime?            @default(now()) @db.Timestamp(6)
   first_name         String?              @db.VarChar(50)
   last_name          String?              @db.VarChar(50)
+  // New columns
+  image_url          String?              @db.VarChar(500)
+  refresh_token      String?              @db.VarChar(500)
+  // Relations
   addresses          addresses[]
   cart               cart[]
   coupons            coupons[]
@@ -228,6 +275,7 @@ model person {
   seller             seller?
   systemadmin        systemadmin?
   user_coupons       user_coupons[]
+  reports            reports[]            @relation("report_reporter")
 }
 
 model person_permissions {
@@ -243,25 +291,43 @@ model product_images {
   productimage    Bytes
   upload_date     DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
   productid       Int
+  // New column
+  image_url       String?  @db.VarChar(500)
+  // Relations
   products        products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([product_imageid, productid])
 }
 
 model products {
-  productid            Int                    @id @default(autoincrement())
-  productname          String                 @db.VarChar(50)
-  cover                Bytes?
-  categoryid           Int?                   @db.SmallInt
-  sellerid             Int?
-  cart_contain         cart_contain[]
-  consist_of           consist_of[]
-  coupon_product       coupon_product[]
-  product_images       product_images[]
-  category             category?              @relation(fields: [categoryid], references: [categoryid], onUpdate: NoAction)
-  seller               seller?                @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
-  reviewing_and_rating reviewing_and_rating[]
-  whishlist_contain    whishlist_contain[]
+  productid               Int                    @id @default(autoincrement())
+  productname             String                 @db.VarChar(100)
+  cover                   Bytes?
+  categoryid              Int?                   @db.SmallInt
+  sellerid                Int?
+  // New columns
+  description             String?                @db.VarChar(2000)
+  price                   Decimal?               @db.Decimal(12, 2)
+  mrp                     Decimal?               @db.Decimal(12, 2)
+  stock                   Int?                   @default(10)
+  in_stock                Boolean?               @default(true)
+  cover_url               String?                @db.VarChar(500)
+  shipping_size           String?                @db.VarChar(20)
+  shipping_bulky_category String?                @db.VarChar(20)
+  is_disabled             Boolean?               @default(false)
+  created_at              DateTime?              @default(now()) @db.Timestamp(6)
+  updated_at              DateTime?              @updatedAt
+  // Relations
+  cart_contain            cart_contain[]
+  consist_of              consist_of[]
+  coupon_product          coupon_product[]
+  product_images          product_images[]
+  category                category?              @relation(fields: [categoryid], references: [categoryid], onUpdate: NoAction)
+  seller                  seller?                @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+  reviewing_and_rating    reviewing_and_rating[]
+  whishlist_contain       whishlist_contain[]
+  product_variants        product_variants[]
+  store_order_items       store_order_items[]
 }
 
 model proof_as_images {
@@ -280,8 +346,13 @@ model returns {
   status          Int?              @db.SmallInt
   requestdate     DateTime          @default(now()) @db.Timestamp(6)
   orderid         Int
+  // New columns
+  store_orderid   Int?
+  refund_amount   Decimal?          @db.Decimal(12, 2)
+  // Relations
   proof_as_images proof_as_images[]
   orders          orders            @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+  store_order     store_orders?     @relation(fields: [store_orderid], references: [store_orderid], onUpdate: NoAction)
 }
 
 model reviewing_and_rating {
@@ -290,6 +361,9 @@ model reviewing_and_rating {
   created_at DateTime @default(now()) @db.Timestamp(6)
   enduserid  Int
   productid  Int
+  // New columns
+  orderid    Int?
+  // Relations
   enduser    enduser  @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
   products   products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
 
@@ -297,29 +371,58 @@ model reviewing_and_rating {
 }
 
 model seller {
-  sellerid             Int            @id @default(autoincrement())
-  storename            String?        @db.VarChar(100)
-  store_description    String?
-  storelogo            Bytes?
-  sellerwallet_balance Decimal?       @default(0.00) @db.Decimal(12, 2)
-  personid             Int            @unique
-  conversation         conversation[]
-  coupons              coupons[]
-  follow               follow[]
-  orders               orders[]
-  payout               payout[]
-  products             products[]
-  person               person         @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  sellerid                 Int                     @id @default(autoincrement())
+  storename                String?                 @db.VarChar(100)
+  store_description        String?
+  storelogo                Bytes?
+  sellerwallet_balance     Decimal?                @default(0.00) @db.Decimal(12, 2)
+  personid                 Int                     @unique
+  // New columns
+  email                    String?                 @db.VarChar(100)
+  phone                    String?                 @db.VarChar(20)
+  address_text             String?                 @db.VarChar(500)
+  username                 String?                 @unique @db.VarChar(100)
+  store_status             String?                 @default("pending") @db.VarChar(20)
+  is_active                Boolean?                @default(false)
+  logo_url                 String?                 @db.VarChar(500)
+  bosta_pickup_location_id String?                 @db.VarChar(100)
+  created_at               DateTime?               @default(now()) @db.Timestamp(6)
+  updated_at               DateTime?               @updatedAt
+  // Relations
+  conversation             conversation[]
+  coupons                  coupons[]
+  follow                   follow[]
+  orders                   orders[]
+  payout                   payout[]
+  products                 products[]
+  person                   person                  @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  store_orders             store_orders[]
+  seller_wallet            seller_wallet?
+  store_pickup_address     store_pickup_addresses?
+  custom_requests          custom_request[]
+  offers                   offers[]
+  reports                  reports[]               @relation("report_seller")
 }
 
 model shipment {
-  shipmentid        Int       @id @default(autoincrement())
-  carrier           String?   @db.VarChar(100)
-  shipment_status   Int?      @db.SmallInt
-  shipped_at_time   DateTime? @db.Timestamp(6)
-  delivered_at_time DateTime? @db.Date
-  tracking_number   String?   @db.VarChar(50)
+  shipmentid        Int               @id @default(autoincrement())
+  carrier           String?           @db.VarChar(100)
+  shipment_status   Int?              @db.SmallInt
+  shipped_at_time   DateTime?         @db.Timestamp(6)
+  delivered_at_time DateTime?         @db.Date
+  tracking_number   String?           @db.VarChar(50)
+  // New columns
+  store_orderid     Int?              @unique
+  bosta_delivery_id String?           @db.VarChar(100)
+  awb_url           String?           @db.VarChar(500)
+  shipping_cost     Decimal?          @db.Decimal(10, 2)
+  cod_amount        Decimal?          @db.Decimal(12, 2)
+  size              String?           @db.VarChar(20)
+  status_text       String?           @db.VarChar(30)
+  // Relations
   orders            orders[]
+  store_order       store_orders?     @relation(fields: [store_orderid], references: [store_orderid], onUpdate: NoAction)
+  shipment_events   shipment_events[]
 }
 
 model standard_order {
@@ -382,4 +485,213 @@ model wishlist {
   numberofproducts  Int?                @default(0)
   enduser           enduser[]
   whishlist_contain whishlist_contain[]
+}
+
+// ─── NEW TABLES ──────────────────────────────────────────────────────────────
+
+model store_orders {
+  store_orderid       Int                   @id @default(autoincrement())
+  orderid             Int
+  sellerid            Int
+  subtotal            Decimal               @db.Decimal(12, 2)
+  discount_total      Decimal               @default(0) @db.Decimal(12, 2)
+  shipping_total      Decimal               @default(0) @db.Decimal(12, 2)
+  total               Decimal               @db.Decimal(12, 2)
+  status              String                @default("ORDER_PLACED") @db.VarChar(30)
+  is_paid             Boolean               @default(false)
+  payment_method      String                @db.VarChar(20)
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @updatedAt
+  // Relations
+  order               orders                @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+  seller              seller                @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+  items               store_order_items[]
+  shipment            shipment?
+  returns             returns[]
+  wallet_transactions wallet_transactions[]
+}
+
+model store_order_items {
+  item_id            Int          @id @default(autoincrement())
+  store_orderid      Int
+  productid          Int
+  quantity           Int
+  price_at_purchase  Decimal      @db.Decimal(12, 2)
+  product_name       String       @db.VarChar(100)
+  product_image_url  String?      @db.VarChar(500)
+  shipping_size      String?      @db.VarChar(20)
+  shipping_bulky_cat String?      @db.VarChar(20)
+  created_at         DateTime     @default(now()) @db.Timestamp(6)
+  // Relations
+  store_order        store_orders @relation(fields: [store_orderid], references: [store_orderid], onDelete: Cascade, onUpdate: NoAction)
+  product            products     @relation(fields: [productid], references: [productid], onUpdate: NoAction)
+}
+
+model seller_wallet {
+  wallet_id           Int                   @id @default(autoincrement())
+  sellerid            Int                   @unique
+  pending_balance     Decimal               @default(0) @db.Decimal(12, 2)
+  available_balance   Decimal               @default(0) @db.Decimal(12, 2)
+  currency            String                @default("EGP") @db.VarChar(10)
+  stripe_account_id   String?               @db.VarChar(100)
+  bank_name           String?               @db.VarChar(100)
+  bank_account_holder String?               @db.VarChar(200)
+  bank_last4          String?               @db.VarChar(4)
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime?             @updatedAt
+  // Relations
+  seller              seller                @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+  transactions        wallet_transactions[]
+}
+
+model wallet_transactions {
+  transaction_id  Int           @id @default(autoincrement())
+  wallet_id       Int
+  type            String        @db.VarChar(30)
+  bucket          String        @db.VarChar(20)
+  amount          Decimal       @db.Decimal(12, 2)
+  currency        String        @default("EGP") @db.VarChar(10)
+  idempotency_key String        @db.VarChar(200)
+  orderid         Int?
+  store_orderid   Int?
+  shipmentid      Int?
+  created_at      DateTime      @default(now()) @db.Timestamp(6)
+  // Relations
+  wallet          seller_wallet @relation(fields: [wallet_id], references: [wallet_id], onDelete: Cascade, onUpdate: NoAction)
+  store_order     store_orders? @relation(fields: [store_orderid], references: [store_orderid], onUpdate: NoAction)
+
+  @@unique([wallet_id, idempotency_key])
+}
+
+model shipment_events {
+  event_id     Int      @id @default(autoincrement())
+  shipmentid   Int
+  event_type   String   @db.VarChar(50)
+  occurred_at  DateTime @default(now()) @db.Timestamp(6)
+  payload_hash String   @db.VarChar(64)
+  raw_payload  Json
+  created_at   DateTime @default(now()) @db.Timestamp(6)
+  // Relations
+  shipment     shipment @relation(fields: [shipmentid], references: [shipmentid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([shipmentid, payload_hash])
+}
+
+model store_pickup_addresses {
+  pickup_id         Int       @id @default(autoincrement())
+  sellerid          Int       @unique
+  first_line        String    @db.VarChar(200)
+  city              String    @db.VarChar(100)
+  bosta_city_id     String?   @db.VarChar(50)
+  bosta_zone_id     String?   @db.VarChar(50)
+  bosta_district_id String?   @db.VarChar(50)
+  phone             String?   @db.VarChar(20)
+  contact_name      String?   @db.VarChar(100)
+  created_at        DateTime  @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @updatedAt
+  // Relations
+  seller            seller    @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model bosta_address_mapping {
+  mapping_id    Int       @id @default(autoincrement())
+  country       String    @db.VarChar(10)
+  city_name     String    @db.VarChar(100)
+  zone_name     String?   @db.VarChar(100)
+  district_name String?   @db.VarChar(100)
+  city_id       String?   @db.VarChar(50)
+  zone_id       String?   @db.VarChar(50)
+  district_id   String?   @db.VarChar(50)
+  created_at    DateTime  @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @updatedAt
+
+  @@index([country, city_name])
+}
+
+model reports {
+  report_id        Int             @id @default(autoincrement())
+  reporter_id      Int?
+  type             String          @db.VarChar(50)
+  reason           String          @db.VarChar(500)
+  description      String?         @db.VarChar(2000)
+  status           String          @default("PENDING") @db.VarChar(20)
+  admin_note       String?         @db.VarChar(1000)
+  productid        Int?
+  sellerid         Int?
+  store_orderid    Int?
+  custom_requestid Int?
+  resolved_at      DateTime?       @db.Timestamp(6)
+  created_at       DateTime        @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?       @updatedAt
+  // Relations
+  reporter         person?         @relation("report_reporter", fields: [reporter_id], references: [personid], onUpdate: NoAction)
+  seller           seller?         @relation("report_seller", fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+  custom_request   custom_request? @relation("report_custom_request", fields: [custom_requestid], references: [requestid], onUpdate: NoAction)
+}
+
+model offers {
+  offer_id             Int              @id @default(autoincrement())
+  requestid            Int
+  sellerid             Int
+  price                Decimal          @db.Decimal(12, 2)
+  description          String?          @db.VarChar(2000)
+  status               String           @default("pending") @db.VarChar(30)
+  seller_comment       String?          @db.VarChar(1000)
+  buyer_comment        String?          @db.VarChar(1000)
+  accepted_at          DateTime?        @db.Timestamp(6)
+  first_paid_at        DateTime?        @db.Timestamp(6)
+  progress_uploaded_at DateTime?        @db.Timestamp(6)
+  second_paid_at       DateTime?        @db.Timestamp(6)
+  ready_to_ship_at     DateTime?        @db.Timestamp(6)
+  paid_at              DateTime?        @db.Timestamp(6)
+  created_at           DateTime         @default(now()) @db.Timestamp(6)
+  updated_at           DateTime?        @updatedAt
+  // Relations
+  custom_request       custom_request   @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
+  seller               seller           @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+  offer_messages       offer_messages[]
+  offer_payments       offer_payments[]
+}
+
+model offer_messages {
+  message_id  Int      @id @default(autoincrement())
+  offer_id    Int
+  author_type String   @db.VarChar(10)
+  author_id   Int
+  text        String   @db.VarChar(2000)
+  image_url   String?  @db.VarChar(500)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  // Relations
+  offer       offers   @relation(fields: [offer_id], references: [offer_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model offer_payments {
+  payment_id     Int        @id @default(autoincrement())
+  offer_id       Int
+  milestone      String     @db.VarChar(20)
+  amount         Decimal    @db.Decimal(12, 2)
+  payment_method String     @db.VarChar(20)
+  address_id     Int?
+  paid_at        DateTime   @default(now()) @db.Timestamp(6)
+  // Relations
+  offer          offers     @relation(fields: [offer_id], references: [offer_id], onDelete: Cascade, onUpdate: NoAction)
+  address        addresses? @relation(fields: [address_id], references: [id], onUpdate: NoAction)
+}
+
+model product_variants {
+  variant_id   Int               @id @default(autoincrement())
+  productid    Int
+  variant_name String            @db.VarChar(100)
+  // Relations
+  product      products          @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+  options      variant_options[]
+}
+
+model variant_options {
+  option_id  Int              @id @default(autoincrement())
+  variant_id Int
+  value      String           @db.VarChar(100)
+  stock      Int              @default(0)
+  // Relations
+  variant    product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade, onUpdate: NoAction)
 }
