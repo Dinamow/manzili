@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["manzili"]
 }
 
 // ─── EXISTING TABLES (extended) ──────────────────────────────────────────────
@@ -32,6 +33,8 @@ model addresses {
   addresses_and_contact_phonenumber addresses_and_contact_phonenumber[]
   orders                            orders[]                            @relation("order_address")
   offer_payments                    offer_payments[]
+
+  @@schema("manzili")
 }
 
 model addresses_and_contact_phonenumber {
@@ -40,6 +43,7 @@ model addresses_and_contact_phonenumber {
   addresses   addresses @relation(fields: [addressid], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([phonenumber, addressid])
+  @@schema("manzili")
 }
 
 model cart {
@@ -48,6 +52,8 @@ model cart {
   created_at   DateTime       @default(now()) @db.Timestamp(6)
   person       person?        @relation(fields: [creatorid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
   cart_contain cart_contain[]
+
+  @@schema("manzili")
 }
 
 model cart_contain {
@@ -58,6 +64,7 @@ model cart_contain {
   products           products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([cartid, productid])
+  @@schema("manzili")
 }
 
 model category {
@@ -65,6 +72,8 @@ model category {
   category_name  String           @db.VarChar(25)
   custom_request custom_request[]
   products       products[]
+
+  @@schema("manzili")
 }
 
 model color_palette {
@@ -75,6 +84,7 @@ model color_palette {
   custom_request    custom_request @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([color_paletteid, requestid])
+  @@schema("manzili")
 }
 
 model consist_of {
@@ -86,6 +96,7 @@ model consist_of {
   products          products @relation(fields: [productid], references: [productid], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([orderid, productid])
+  @@schema("manzili")
 }
 
 model conversation {
@@ -97,6 +108,8 @@ model conversation {
   enduser        enduser    @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
   seller         seller     @relation(fields: [sellerid], references: [sellerid], onDelete: NoAction, onUpdate: NoAction)
   messages       messages[]
+
+  @@schema("manzili")
 }
 
 model coupon_product {
@@ -105,6 +118,8 @@ model coupon_product {
   productid        Int
   coupons          coupons  @relation(fields: [couponid], references: [couponid], onDelete: Cascade, onUpdate: NoAction)
   products         products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -127,6 +142,8 @@ model coupons {
   person              person           @relation(fields: [creatorid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
   seller              seller?          @relation(fields: [storeid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
   user_coupons        user_coupons[]
+
+  @@schema("manzili")
 }
 
 model custom_request {
@@ -157,11 +174,15 @@ model custom_request {
   voicememo             voicememo[]
   offers                offers[]
   reports               reports[]            @relation("report_custom_request")
+
+  @@schema("manzili")
 }
 
 model customized_order {
   orderid Int    @id
   orders  orders @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model enduser {
@@ -175,6 +196,8 @@ model enduser {
   follow               follow[]
   orders               orders[]
   reviewing_and_rating reviewing_and_rating[]
+
+  @@schema("manzili")
 }
 
 model follow {
@@ -185,6 +208,7 @@ model follow {
   seller      seller    @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([enduserid, sellerid])
+  @@schema("manzili")
 }
 
 model messages {
@@ -196,6 +220,7 @@ model messages {
   conversation   conversation @relation(fields: [conversationid], references: [conversationid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([messageid, conversationid])
+  @@schema("manzili")
 }
 
 model notification {
@@ -210,6 +235,8 @@ model notification {
   href                String?  @db.VarChar(500)
   // Relations
   person              person   @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model orders {
@@ -243,6 +270,8 @@ model orders {
   standard_order           standard_order?
   user_coupons             user_coupons[]
   store_orders             store_orders[]
+
+  @@schema("manzili")
 }
 
 model payout {
@@ -253,6 +282,8 @@ model payout {
   paid_at         DateTime? @default(now()) @db.Timestamp(6)
   sellerid        Int?
   seller          seller?   @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model person {
@@ -276,6 +307,8 @@ model person {
   systemadmin        systemadmin?
   user_coupons       user_coupons[]
   reports            reports[]            @relation("report_reporter")
+
+  @@schema("manzili")
 }
 
 model person_permissions {
@@ -284,6 +317,7 @@ model person_permissions {
   person     person @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([permission, personid])
+  @@schema("manzili")
 }
 
 model product_images {
@@ -297,6 +331,7 @@ model product_images {
   products        products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([product_imageid, productid])
+  @@schema("manzili")
 }
 
 model products {
@@ -328,6 +363,8 @@ model products {
   whishlist_contain       whishlist_contain[]
   product_variants        product_variants[]
   store_order_items       store_order_items[]
+
+  @@schema("manzili")
 }
 
 model proof_as_images {
@@ -338,6 +375,7 @@ model proof_as_images {
   returns      returns @relation(fields: [returnid], references: [returnid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([imageid, returnid])
+  @@schema("manzili")
 }
 
 model returns {
@@ -353,6 +391,8 @@ model returns {
   proof_as_images proof_as_images[]
   orders          orders            @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
   store_order     store_orders?     @relation(fields: [store_orderid], references: [store_orderid], onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model reviewing_and_rating {
@@ -368,6 +408,7 @@ model reviewing_and_rating {
   products   products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([enduserid, productid])
+  @@schema("manzili")
 }
 
 model seller {
@@ -402,6 +443,8 @@ model seller {
   custom_requests          custom_request[]
   offers                   offers[]
   reports                  reports[]               @relation("report_seller")
+
+  @@schema("manzili")
 }
 
 model shipment {
@@ -423,11 +466,15 @@ model shipment {
   orders            orders[]
   store_order       store_orders?     @relation(fields: [store_orderid], references: [store_orderid], onUpdate: NoAction)
   shipment_events   shipment_events[]
+
+  @@schema("manzili")
 }
 
 model standard_order {
   orderid Int    @id
   orders  orders @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model systemadmin {
@@ -437,6 +484,8 @@ model systemadmin {
   person            person        @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
   systemadmin       systemadmin?  @relation("systemadminTosystemadmin", fields: [supervisorid], references: [adminid], onDelete: NoAction, onUpdate: NoAction)
   other_systemadmin systemadmin[] @relation("systemadminTosystemadmin")
+
+  @@schema("manzili")
 }
 
 model user_coupons {
@@ -448,6 +497,8 @@ model user_coupons {
   coupons       coupons  @relation(fields: [couponid], references: [couponid], onDelete: NoAction, onUpdate: NoAction)
   orders        orders   @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
   person        person   @relation(fields: [userid], references: [personid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model visual_inspiration {
@@ -458,6 +509,7 @@ model visual_inspiration {
   custom_request custom_request @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([imageid, requestid])
+  @@schema("manzili")
 }
 
 model voicememo {
@@ -469,6 +521,7 @@ model voicememo {
   custom_request custom_request @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([recordingid, requestid])
+  @@schema("manzili")
 }
 
 model whishlist_contain {
@@ -478,6 +531,7 @@ model whishlist_contain {
   wishlist   wishlist @relation(fields: [wichlistid], references: [wichlistid], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([wichlistid, productid])
+  @@schema("manzili")
 }
 
 model wishlist {
@@ -485,6 +539,8 @@ model wishlist {
   numberofproducts  Int?                @default(0)
   enduser           enduser[]
   whishlist_contain whishlist_contain[]
+
+  @@schema("manzili")
 }
 
 // ─── NEW TABLES ──────────────────────────────────────────────────────────────
@@ -509,6 +565,8 @@ model store_orders {
   shipment            shipment?
   returns             returns[]
   wallet_transactions wallet_transactions[]
+
+  @@schema("manzili")
 }
 
 model store_order_items {
@@ -525,6 +583,8 @@ model store_order_items {
   // Relations
   store_order        store_orders @relation(fields: [store_orderid], references: [store_orderid], onDelete: Cascade, onUpdate: NoAction)
   product            products     @relation(fields: [productid], references: [productid], onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model seller_wallet {
@@ -542,6 +602,8 @@ model seller_wallet {
   // Relations
   seller              seller                @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
   transactions        wallet_transactions[]
+
+  @@schema("manzili")
 }
 
 model wallet_transactions {
@@ -561,6 +623,7 @@ model wallet_transactions {
   store_order     store_orders? @relation(fields: [store_orderid], references: [store_orderid], onUpdate: NoAction)
 
   @@unique([wallet_id, idempotency_key])
+  @@schema("manzili")
 }
 
 model shipment_events {
@@ -575,6 +638,7 @@ model shipment_events {
   shipment     shipment @relation(fields: [shipmentid], references: [shipmentid], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([shipmentid, payload_hash])
+  @@schema("manzili")
 }
 
 model store_pickup_addresses {
@@ -591,6 +655,8 @@ model store_pickup_addresses {
   updated_at        DateTime? @updatedAt
   // Relations
   seller            seller    @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model bosta_address_mapping {
@@ -606,6 +672,7 @@ model bosta_address_mapping {
   updated_at    DateTime? @updatedAt
 
   @@index([country, city_name])
+  @@schema("manzili")
 }
 
 model reports {
@@ -627,6 +694,8 @@ model reports {
   reporter         person?         @relation("report_reporter", fields: [reporter_id], references: [personid], onUpdate: NoAction)
   seller           seller?         @relation("report_seller", fields: [sellerid], references: [sellerid], onUpdate: NoAction)
   custom_request   custom_request? @relation("report_custom_request", fields: [custom_requestid], references: [requestid], onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model offers {
@@ -651,6 +720,8 @@ model offers {
   seller               seller           @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
   offer_messages       offer_messages[]
   offer_payments       offer_payments[]
+
+  @@schema("manzili")
 }
 
 model offer_messages {
@@ -663,6 +734,8 @@ model offer_messages {
   created_at  DateTime @default(now()) @db.Timestamp(6)
   // Relations
   offer       offers   @relation(fields: [offer_id], references: [offer_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model offer_payments {
@@ -676,6 +749,8 @@ model offer_payments {
   // Relations
   offer          offers     @relation(fields: [offer_id], references: [offer_id], onDelete: Cascade, onUpdate: NoAction)
   address        addresses? @relation(fields: [address_id], references: [id], onUpdate: NoAction)
+
+  @@schema("manzili")
 }
 
 model product_variants {
@@ -685,6 +760,8 @@ model product_variants {
   // Relations
   product      products          @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
   options      variant_options[]
+
+  @@schema("manzili")
 }
 
 model variant_options {
@@ -694,4 +771,6 @@ model variant_options {
   stock      Int              @default(0)
   // Relations
   variant    product_variants @relation(fields: [variant_id], references: [variant_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("manzili")
 }

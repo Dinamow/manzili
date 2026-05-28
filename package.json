@@ -8,6 +8,7 @@
     "dev": "node --watch index.js",
     "prisma:studio": "prisma studio --port 5555 --browser=none",
     "prisma:gen": "prisma generate",
+    "prisma:push": "prisma db push",
     "prisma:pull": "prisma db pull"
   },
   "dependencies": {
