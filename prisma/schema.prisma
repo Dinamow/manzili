@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model addresses {
+  id                                Int                                 @id @default(autoincrement())
+  city                              String?                             @db.VarChar(50)
+  street                            String?                             @db.VarChar(100)
+  buildingnumber                    String?                             @db.VarChar(20)
+  apartmentnumber                   String?                             @db.VarChar(20)
+  zipcode                           String?                             @db.VarChar(20)
+  personid                          Int?
+  person                            person?                             @relation(fields: [personid], references: [personid], onUpdate: NoAction)
+  addresses_and_contact_phonenumber addresses_and_contact_phonenumber[]
+}
+
+model addresses_and_contact_phonenumber {
+  phonenumber String    @db.VarChar(20)
+  addressid   Int
+  addresses   addresses @relation(fields: [addressid], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([phonenumber, addressid])
+}
+
+model cart {
+  cartid       Int            @id @default(autoincrement())
+  creatorid    Int?
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  person       person?        @relation(fields: [creatorid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  cart_contain cart_contain[]
+}
+
+model cart_contain {
+  number_of_products Int?     @default(0)
+  cartid             Int
+  productid          Int
+  cart               cart     @relation(fields: [cartid], references: [cartid], onDelete: Cascade, onUpdate: NoAction)
+  products           products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([cartid, productid])
+}
+
+model category {
+  categoryid     Int              @id @default(autoincrement()) @db.SmallInt
+  category_name  String           @db.VarChar(25)
+  custom_request custom_request[]
+  products       products[]
+}
+
+model color_palette {
+  color_paletteid   Int            @default(autoincrement())
+  color_code        String         @db.VarChar(20)
+  color_description String         @db.VarChar(100)
+  requestid         Int
+  custom_request    custom_request @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([color_paletteid, requestid])
+}
+
+model consist_of {
+  quantity          Int
+  price_at_purchase Decimal  @db.Decimal(12, 2)
+  orderid           Int
+  productid         Int
+  orders            orders   @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+  products          products @relation(fields: [productid], references: [productid], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([orderid, productid])
+}
+
+model conversation {
+  conversationid Int        @id @default(autoincrement())
+  created_at     DateTime   @default(now()) @db.Timestamp(6)
+  lastmessageat  DateTime?  @db.Timestamp(6)
+  enduserid      Int
+  sellerid       Int
+  enduser        enduser    @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
+  seller         seller     @relation(fields: [sellerid], references: [sellerid], onDelete: NoAction, onUpdate: NoAction)
+  messages       messages[]
+}
+
+model coupon_product {
+  coupon_productid Int      @id @default(autoincrement())
+  couponid         Int
+  productid        Int
+  coupons          coupons  @relation(fields: [couponid], references: [couponid], onDelete: Cascade, onUpdate: NoAction)
+  products         products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model coupons {
+  couponid       Int              @id @default(autoincrement())
+  description    String           @db.VarChar(500)
+  created_at     DateTime         @default(now()) @db.Timestamp(6)
+  status         Boolean?         @default(true)
+  expired_date   DateTime?        @db.Timestamp(6)
+  scope          Int              @db.SmallInt
+  creatorid      Int
+  storeid        Int?
+  coupon_product coupon_product[]
+  person         person           @relation(fields: [creatorid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  seller         seller?          @relation(fields: [storeid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+  user_coupons   user_coupons[]
+}
+
+model custom_request {
+  requestid             Int                  @id @default(autoincrement())
+  itemname              String               @db.VarChar(100)
+  description           String               @db.VarChar(1000)
+  visibility            Boolean              @default(true)
+  quantity              Int?                 @default(1) @db.SmallInt
+  lenght                Float?
+  width                 Float?
+  hight                 Float?
+  matrial               String?              @db.VarChar(255)
+  desired_delivery_date DateTime?            @db.Date
+  created_at            DateTime             @default(dbgenerated("CURRENT_DATE")) @db.Date
+  status                Int?                 @db.SmallInt
+  enduserid             Int
+  categoryid            Int
+  color_palette         color_palette[]
+  category              category             @relation(fields: [categoryid], references: [categoryid], onDelete: NoAction, onUpdate: NoAction)
+  enduser               enduser              @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
+  visual_inspiration    visual_inspiration[]
+  voicememo             voicememo[]
+}
+
+model customized_order {
+  orderid Int    @id
+  orders  orders @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model enduser {
+  enduserid            Int                    @id @default(autoincrement())
+  wichlistid           Int?
+  personid             Int                    @unique
+  conversation         conversation[]
+  custom_request       custom_request[]
+  person               person                 @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  wishlist             wishlist?              @relation(fields: [wichlistid], references: [wichlistid], onUpdate: NoAction)
+  follow               follow[]
+  orders               orders[]
+  reviewing_and_rating reviewing_and_rating[]
+}
+
+model follow {
+  followed_at DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  enduserid   Int
+  sellerid    Int
+  enduser     enduser   @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
+  seller      seller    @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([enduserid, sellerid])
+}
+
+model messages {
+  messageid      Int          @default(autoincrement())
+  messagecontent String
+  sent_at        DateTime     @default(now()) @db.Timestamp(5)
+  isread         Boolean?     @default(false)
+  conversationid Int
+  conversation   conversation @relation(fields: [conversationid], references: [conversationid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([messageid, conversationid])
+}
+
+model notification {
+  notification_id     Int      @id @default(autoincrement())
+  tittle              String   @db.VarChar(100)
+  notificationcontent String   @db.VarChar(700)
+  created_at          DateTime @default(now()) @db.Timestamp(6)
+  is_read             Boolean? @default(false)
+  personid            Int
+  person              person   @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model orders {
+  orderid          Int               @id @default(autoincrement())
+  status           Int?              @db.SmallInt
+  shippingcost     Decimal?          @db.Decimal(10, 2)
+  totalamount      Decimal?          @db.Decimal(12, 2)
+  paymentid        Int
+  paymentmethod    Int?              @db.SmallInt
+  psp              String?           @db.VarChar(50)
+  paymentstatus    Int?              @db.SmallInt
+  transaction_ref  String?           @db.VarChar(50)
+  paid_at          DateTime          @db.Timestamp(6)
+  shipmentid       Int?
+  sellerid         Int?
+  enduserid        Int?
+  consist_of       consist_of[]
+  customized_order customized_order?
+  enduser          enduser?          @relation(fields: [enduserid], references: [enduserid], onUpdate: NoAction)
+  seller           seller?           @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+  shipment         shipment?         @relation(fields: [shipmentid], references: [shipmentid], onUpdate: NoAction)
+  returns          returns[]
+  standard_order   standard_order?
+  user_coupons     user_coupons[]
+}
+
+model payout {
+  payoutid        Int       @id @default(autoincrement())
+  amount          Decimal?  @db.Decimal(12, 2)
+  status          Int?
+  request_at_time DateTime? @db.Timestamp(6)
+  paid_at         DateTime? @default(now()) @db.Timestamp(6)
+  sellerid        Int?
+  seller          seller?   @relation(fields: [sellerid], references: [sellerid], onUpdate: NoAction)
+}
+
+model person {
+  personid           Int                  @id @default(autoincrement())
+  email              String               @unique @db.VarChar(100)
+  password           String               @db.VarChar(50)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  first_name         String?              @db.VarChar(50)
+  last_name          String?              @db.VarChar(50)
+  addresses          addresses[]
+  cart               cart[]
+  coupons            coupons[]
+  enduser            enduser?
+  notification       notification[]
+  person_permissions person_permissions[]
+  seller             seller?
+  systemadmin        systemadmin?
+  user_coupons       user_coupons[]
+}
+
+model person_permissions {
+  permission Int
+  personid   Int
+  person     person @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([permission, personid])
+}
+
+model product_images {
+  product_imageid Int      @default(autoincrement())
+  productimage    Bytes
+  upload_date     DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+  productid       Int
+  products        products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([product_imageid, productid])
+}
+
+model products {
+  productid            Int                    @id @default(autoincrement())
+  productname          String                 @db.VarChar(50)
+  cover                Bytes?
+  categoryid           Int?                   @db.SmallInt
+  sellerid             Int?
+  cart_contain         cart_contain[]
+  consist_of           consist_of[]
+  coupon_product       coupon_product[]
+  product_images       product_images[]
+  category             category?              @relation(fields: [categoryid], references: [categoryid], onUpdate: NoAction)
+  seller               seller?                @relation(fields: [sellerid], references: [sellerid], onDelete: Cascade, onUpdate: NoAction)
+  reviewing_and_rating reviewing_and_rating[]
+  whishlist_contain    whishlist_contain[]
+}
+
+model proof_as_images {
+  imageid      Int     @default(autoincrement())
+  evidence_url String? @db.VarChar(500)
+  the_image    Bytes?
+  returnid     Int
+  returns      returns @relation(fields: [returnid], references: [returnid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([imageid, returnid])
+}
+
+model returns {
+  returnid        Int               @id @default(autoincrement())
+  reason          String            @db.VarChar(1000)
+  status          Int?              @db.SmallInt
+  requestdate     DateTime          @default(now()) @db.Timestamp(6)
+  orderid         Int
+  proof_as_images proof_as_images[]
+  orders          orders            @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model reviewing_and_rating {
+  rating     Float
+  comment    String?  @db.VarChar(500)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  enduserid  Int
+  productid  Int
+  enduser    enduser  @relation(fields: [enduserid], references: [enduserid], onDelete: NoAction, onUpdate: NoAction)
+  products   products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([enduserid, productid])
+}
+
+model seller {
+  sellerid             Int            @id @default(autoincrement())
+  storename            String?        @db.VarChar(100)
+  store_description    String?
+  storelogo            Bytes?
+  sellerwallet_balance Decimal?       @default(0.00) @db.Decimal(12, 2)
+  personid             Int            @unique
+  conversation         conversation[]
+  coupons              coupons[]
+  follow               follow[]
+  orders               orders[]
+  payout               payout[]
+  products             products[]
+  person               person         @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model shipment {
+  shipmentid        Int       @id @default(autoincrement())
+  carrier           String?   @db.VarChar(100)
+  shipment_status   Int?      @db.SmallInt
+  shipped_at_time   DateTime? @db.Timestamp(6)
+  delivered_at_time DateTime? @db.Date
+  tracking_number   String?   @db.VarChar(50)
+  orders            orders[]
+}
+
+model standard_order {
+  orderid Int    @id
+  orders  orders @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model systemadmin {
+  adminid           Int           @id @default(autoincrement())
+  supervisorid      Int?
+  personid          Int           @unique
+  person            person        @relation(fields: [personid], references: [personid], onDelete: Cascade, onUpdate: NoAction)
+  systemadmin       systemadmin?  @relation("systemadminTosystemadmin", fields: [supervisorid], references: [adminid], onDelete: NoAction, onUpdate: NoAction)
+  other_systemadmin systemadmin[] @relation("systemadminTosystemadmin")
+}
+
+model user_coupons {
+  used_couponid Int      @id @default(autoincrement())
+  used_at       DateTime @default(now()) @db.Timestamp(6)
+  couponid      Int
+  userid        Int
+  orderid       Int
+  coupons       coupons  @relation(fields: [couponid], references: [couponid], onDelete: NoAction, onUpdate: NoAction)
+  orders        orders   @relation(fields: [orderid], references: [orderid], onDelete: Cascade, onUpdate: NoAction)
+  person        person   @relation(fields: [userid], references: [personid], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model visual_inspiration {
+  imageid        Int            @default(autoincrement())
+  the_image      Bytes?
+  imageurl       String?        @db.VarChar(500)
+  requestid      Int
+  custom_request custom_request @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([imageid, requestid])
+}
+
+model voicememo {
+  recordingid    Int            @default(autoincrement())
+  duration       Float?
+  send_at        DateTime?      @default(now()) @db.Timestamp(6)
+  record         Bytes?
+  requestid      Int
+  custom_request custom_request @relation(fields: [requestid], references: [requestid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([recordingid, requestid])
+}
+
+model whishlist_contain {
+  wichlistid Int
+  productid  Int
+  products   products @relation(fields: [productid], references: [productid], onDelete: Cascade, onUpdate: NoAction)
+  wishlist   wishlist @relation(fields: [wichlistid], references: [wichlistid], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([wichlistid, productid])
+}
+
+model wishlist {
+  wichlistid        Int                 @id @default(autoincrement())
+  numberofproducts  Int?                @default(0)
+  enduser           enduser[]
+  whishlist_contain whishlist_contain[]
+}
