@@ -1,11 +1,16 @@
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* ./
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile --production; \
-    elif [ -f package-lock.json ]; then npm ci --omit=dev; \
-    else npm install --omit=dev; fi
+COPY prisma ./prisma
+# Install ALL deps (incl. dev) so the `prisma` CLI is available, generate the
+# client into node_modules/.prisma/client/, then prune dev deps for slim runtime.
+RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then npm ci; \
+    else npm install; fi \
+ && npx prisma generate \
+ && npm prune --omit=dev
 
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
@@ -13,10 +18,10 @@ ENV PORT=3000
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
 COPY index.js ./
+COPY src ./src
 COPY prisma ./prisma
 
-RUN addgroup -S app && adduser -S app -G app && chown -R app:app /app
-USER app
+USER node
 
 EXPOSE 3000
 

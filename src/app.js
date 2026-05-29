@@ -15,7 +15,7 @@ function createApp() {
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
   // Stripe webhooks need raw body - mount BEFORE json parser
-  app.use('/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
+  app.use('/api/v1/webhooks/stripe', express.raw({ type: 'application/json' }));
 
   // Body parsing
   app.use(express.json({ limit: '10mb' }));
@@ -23,12 +23,12 @@ function createApp() {
   app.use(cookieParser());
 
   // Health check
-  app.get('/health', (_req, res) => {
+  app.get('/api/v1/health', (_req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
   });
 
   // API routes - lazy require to avoid circular deps during startup
-  app.use('/v1', require('./routes'));
+  app.use('/api/v1', require('./routes'));
 
   // 404 handler
   app.use((_req, res) => {

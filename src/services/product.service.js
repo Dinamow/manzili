@@ -46,15 +46,18 @@ async function getWishlistedIds(userId) {
   return new Set(items.map((i) => i.productid));
 }
 
-async function listProducts({ page, limit, skip, category, sortBy = 'created_at', sortDir = 'desc', userId }) {
+async function listProducts({ page, limit, skip, category, sortBy, sortDir, userId }) {
+  const effectiveSortBy = sortBy || 'created_at';
+  const effectiveSortDir = sortDir === 'asc' ? 'asc' : 'desc';
+
   const where = { is_disabled: { not: true } };
   if (category) {
     where.category = { category_name: { equals: category, mode: 'insensitive' } };
   }
 
   const orderBy = {};
-  if (sortBy === 'price') orderBy.price = sortDir;
-  else orderBy.created_at = sortDir;
+  if (effectiveSortBy === 'price') orderBy.price = effectiveSortDir;
+  else orderBy.created_at = effectiveSortDir;
 
   const [products, total] = await Promise.all([
     prisma.products.findMany({ where, include: productInclude, skip, take: limit, orderBy }),
